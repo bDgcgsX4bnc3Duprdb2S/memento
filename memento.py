@@ -18,10 +18,23 @@ class FuncCall:
 	kwargs: dict[Any] = field(default_factory=dict)
 
 	def signature(self) -> str:
-		args_signature = str(self.args).strip("(").strip(")").strip(",")
-		kwargs_signature = str(self.kwargs).strip('{').strip('}').strip(',')
-		args_signature = (args_signature + "," + kwargs_signature).strip(',')
-		return f"{self.func.__name__}({args_signature})"
+		signature: str = f"{self.func.__name__}("
+		
+		for value in self.args:
+			try:
+				signature += f"{value.__class__.__name__}(**{value.__dict__}),"
+			except AttributeError:
+				signature += f"{repr(value)},"
+			
+		for key, value in self.kwargs.items():
+			try:
+				signature += f"{key}={value.__class__.__name__}(**{value.__dict__}),"
+			except AttributeError:
+				signature += f"{key}={repr(value)},"
+		
+		signature = signature.strip(",")
+		signature += ")"
+		return signature
 
 	def key(self):
 		return self.signature().__hash__()
@@ -161,7 +174,7 @@ class Cache:
 		return value
 
 
-def cache(fun: callable = None, max_size: int = None, max_hits: int = None, max_timedelta: timedelta = None):
+def cache(fun: callable = None, max_size: int = 255, max_hits: int = None, max_timedelta: timedelta = None):
 	"""
 	Decorator to cache function returns.
 

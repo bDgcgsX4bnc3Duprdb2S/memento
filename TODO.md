@@ -1,8 +1,4 @@
 # TODO
-- If fun arg is an obj, an attribute change will not be reflected in the signature.
-  Except if obj.__repr__ reflect the fun call
-  Or object hash?
-  Or another way to monitor changes in the arg provided to fun
 
 - Load cache from disk to reuse cache between program calls.
   Load can be serial or // to importing module or can be trigerred only at first fun call.

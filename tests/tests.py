@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import pytest
 import logging
 import rich
@@ -307,3 +309,67 @@ def test_fun_instead_of_decorator():
 
 	# Check output_value
 	assert output_value == expected_output_value
+
+def test_obJ_change():
+	"""
+	Fix a bug with classic obj (not dataclasses) as args where repr/str are not implemented.
+	So signature did NOT reflect changes in the obj.
+	Now obj are handled because signature is computed based on obj.__dict__.
+	This is not perfect as:
+	- Some private attr of obj are not relevant and should not be monitored.
+	  They will create lot of cache entries.
+	  Default cache max_size=255 should limit the perf impact.
+	  But at least client will get a return value from the fun call and not always the same value from the cache.
+	- Nested obj signature won't be computed.
+	"""
+	
+	"""
+	# No problem with dataclass because it implement __repr__ and __str__ by default
+	@dataclass
+	class Pet:
+		name: str
+		age: int
+		def __str__(self):
+			return f"{self.__class__.__name__}(**{self.__dict__})"
+	"""
+	
+	# Classic class don't have default __repr__ and __str__ so any change to age is NOT reflected on signature
+	class Pet:
+		def __init__(self, name: str, age: int):
+			self.name = name
+			self.age = age
+		
+		"""
+		# This is mandatory to make this cachable before the fix
+		def __repr__(self):
+			return f"{self.__class__.__name__}(**{self.__dict__})"
+		"""
+		
+	@cache
+	def my_test(pet: Pet):
+		log.info(f"function was executed")
+		return pet.age
+	
+	cache_info: memento.Cache = my_test.cache_info
+	log.info(f"Cache:")
+	log.info(cache_info)
+	
+	pet: Pet = Pet("Sunny", 2)
+	log.info(f"{pet.__hash__()=}")
+	
+	log.info(f"Calling function for pet.age = 2")
+	age = my_test(pet)
+	log.info(f"{age=}")
+	
+	log.info(f"Cache:")
+	log.info(cache_info)
+	
+	pet.age = 3
+	
+	log.info(f"Calling function for pet.age = 3")
+	age = my_test(pet)
+	log.info(f"{age=}")
+	
+	log.info(f"Cache:")
+	log.info(cache_info)
+	
