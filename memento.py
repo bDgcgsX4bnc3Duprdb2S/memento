@@ -25,7 +25,10 @@ class FuncCall:
 				signature += f"{value.__class__.__name__}(**{value.__dict__}),"
 			except AttributeError:
 				signature += f"{repr(value)},"
-			
+		
+		# Sort kwargs to preserve signature as much as possible if their order change
+		self.kwargs = dict(sorted(self.kwargs.items()))
+		
 		for key, value in self.kwargs.items():
 			try:
 				signature += f"{key}={value.__class__.__name__}(**{value.__dict__}),"
