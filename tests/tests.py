@@ -310,17 +310,22 @@ def test_fun_instead_of_decorator():
 	# Check output_value
 	assert output_value == expected_output_value
 
-def test_obJ_change():
+def test_obj_change():
 	"""
 	Fix a bug with classic obj (not dataclasses) as args where repr/str are not implemented.
 	So signature did NOT reflect changes in the obj.
 	Now obj are handled because signature is computed based on obj.__dict__.
+	
 	This is not perfect as:
 	- Some private attr of obj are not relevant and should not be monitored.
 	  They will create lot of cache entries.
 	  Default cache max_size=255 should limit the perf impact.
 	  But at least client will get a return value from the fun call and not always the same value from the cache.
 	- Nested obj signature won't be computed.
+	
+	One can think obj.__hash__ must be better.
+	It should...
+	But testing shows default __hash_ (which is rarely override) doesn't change in some situations like in this test.
 	"""
 	
 	"""
@@ -339,11 +344,11 @@ def test_obJ_change():
 			self.name = name
 			self.age = age
 		
-		"""
-		# This is mandatory to make this cachable before the fix
+		# This was mandatory to make this cachable before the fix.
+		# Now i just use it for better logging
 		def __repr__(self):
 			return f"{self.__class__.__name__}(**{self.__dict__})"
-		"""
+		
 		
 	@cache
 	def my_test(pet: Pet):
@@ -355,7 +360,8 @@ def test_obJ_change():
 	log.info(cache_info)
 	
 	pet: Pet = Pet("Sunny", 2)
-	log.info(f"{pet.__hash__()=}")
+	hash1 = pet.__hash__()
+	log.info(f"{pet}, hash={hash1}")
 	
 	log.info(f"Calling function for pet.age = 2")
 	age = my_test(pet)
@@ -365,6 +371,8 @@ def test_obJ_change():
 	log.info(cache_info)
 	
 	pet.age = 3
+	hash2 = pet.__hash__()
+	log.info(f"{pet}, hash={hash2} vs before the change ({hash1})")
 	
 	log.info(f"Calling function for pet.age = 3")
 	age = my_test(pet)
@@ -373,3 +381,4 @@ def test_obJ_change():
 	log.info(f"Cache:")
 	log.info(cache_info)
 	
+	assert len(cache_info) == 2
