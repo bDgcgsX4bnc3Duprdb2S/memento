@@ -6,7 +6,7 @@ Python lib to provide caching to functions
 	>>> from chrono import Chrono
 	>>> from memento import cache
 	>>>
-	>>> @cache(max_size=255, max_hits=None, max_timedelta=None)
+	>>> @cache(max_size=255, max_hits=None, max_age=None)
 	... def fibonacci(n: int):
 	... time.sleep(0.1)  # For the purpose of the demo
 	... 	if n < 2:
@@ -20,7 +20,7 @@ Python lib to provide caching to functions
 	|	func=fibonacci(),
 	|	max_size=255,
 	|	max_hits=None,
-	|	max_timedelta=None,
+	|	max_age=None,
 	|	entries=OrderedDict([
 	|	|	(	7060431079079814790, 
 	|	|	|	CacheEntry(

@@ -201,11 +201,11 @@ def test_max_hits():
 	assert output_value == expected_output_value
 
 
-def test_max_timedelta():
+def test_max_age():
 	input_value: int = 1
 	expected_output_value: int = 1
 
-	@cache(max_timedelta=timedelta(seconds=1))
+	@cache(max_age=timedelta(seconds=1))
 	def my_test(n):
 		log.info(f"function was executed")
 		return n

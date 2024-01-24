@@ -68,7 +68,7 @@ class Cache:
 	fun: callable
 	max_size: int = None
 	max_hits: int = None
-	max_timedelta: timedelta = None
+	max_age: timedelta = None
 	entries: OrderedDict[Any, CacheEntry] = field(default_factory=OrderedDict)
 
 	def __repr__(self):
@@ -76,7 +76,7 @@ class Cache:
 		result += f"|	func={self.fun.__name__}()," + os.linesep
 		result += f"|	max_size={self.max_size}," + os.linesep
 		result += f"|	max_hits={self.max_hits}," + os.linesep
-		result += f"|	max_timedelta={self.max_timedelta}," + os.linesep
+		result += f"|	max_age={self.max_age}," + os.linesep
 		result += f"|	entries={self.entries.__class__.__name__}([" + os.linesep
 		for key, entry in self.entries.items():
 			result += f"|	|	(	{key}, " + os.linesep
@@ -133,7 +133,7 @@ class Cache:
 
 		# Update and check access_time
 		cache_entry.access_time = datetime.now()
-		if self.max_timedelta is not None and cache_entry.access_time - cache_entry.insert_time > self.max_timedelta:
+		if self.max_age is not None and cache_entry.access_time - cache_entry.insert_time > self.max_age:
 			log.info(f"{cache_entry.func_call.signature()}: Cache_entry flushed because of its age")
 			# If cache is not empty
 			if len(self.entries) != 0:
@@ -177,7 +177,7 @@ class Cache:
 		return value
 
 
-def cache(fun: callable = None, max_size: int = 255, max_hits: int = None, max_timedelta: timedelta = None):
+def cache(fun: callable = None, max_size: int = 255, max_hits: int = None, max_age: timedelta = None):
 	"""
 	Decorator to cache function returns.
 
@@ -188,12 +188,12 @@ def cache(fun: callable = None, max_size: int = 255, max_hits: int = None, max_t
 	:param fun: Cached function
 	:param max_size: Max size of cache after which it'll be reduced
 	:param max_hits: Max hits of a cache entry after which it'll be removed from cache
-	:param max_timedelta: Max time delta of a cache entry after which it'll be removed from cache
+	:param max_age: Max time delta of a cache entry after which it'll be removed from cache
 	:return: func return
 	"""
 
 	def cache_decorator(fun: callable):
-		cache_info = Cache(fun=fun, max_size=max_size, max_hits=max_hits, max_timedelta=max_timedelta)
+		cache_info = Cache(fun=fun, max_size=max_size, max_hits=max_hits, max_age=max_age)
 
 		@wraps(fun)
 		def wrapper(*args, **kwargs):
